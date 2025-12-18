@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Online Food Ordering System</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(120deg, #fff5f5, #ffecec);
+    }
+
+    header {
+        background: linear-gradient(90deg, #ff4d4d, #ff1a1a);
+        padding: 25px;
+        text-align: center;
+        color: white;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 20px;
+    }
+
+    h2 {
+        border-left: 6px solid #ff4d4d;
+        padding-left: 12px;
+        color: #333;
+        font-weight: 600;
+    }
+
+    /* INPUTS */
+    input {
+        padding: 12px;
+        width: 40%;
+        border-radius: 10px;
+        border: 1.5px solid #ffb3b3;
+        outline: none;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    input:focus {
+        border-color: #ff4d4d;
+        box-shadow: 0 0 8px rgba(255,0,0,0.2);
+    }
+
+    /* BUTTONS */
+    button {
+        background: #ff4d4d;
+        color: white;
+        padding: 12px 18px;
+        border: 0;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background: #cc0000;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 12px rgba(255,0,0,0.3);
+    }
+
+    /* MENU GRID */
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 25px;
+        margin-top: 20px;
+    }
+
+    .item-card {
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        border-radius: 15px;
+        border: 1px solid #ffe6e6;
+        transition: 0.3s;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+
+    .item-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    .food-img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+
+    /* CART */
+    .cart-box {
+        margin-top: 20px;
+        background: #fff7f7;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #ffcccc;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    th, td {
+        border: 1px solid #ffdede;
+        padding: 12px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    th {
+        background: #ffe6e6;
+        font-weight: 600;
+    }
+    .success {
+        background: #d1ffd9;
+        padding: 12px;
+        margin-top: 10px;
+        border-left: 6px solid #28a745;
+        border-radius: 8px;
+    }
+    .error {
+        background: #ffd6d6;
+        padding: 12px;
+        margin-top: 10px;
+        border-left: 6px solid #ff0000;
+        border-radius: 8px;
+    }
+
+</style>
+</head>
+
+<body>
+
+<header>🍽️ Online Food Ordering System</header>
+
+<div class="container">
+    <h2>👤 Customer Details</h2>
+    <input id="customerName" placeholder="Enter customer name">
+    <button onclick="addCustomer()">Add Customer</button>
+
+    <h2>🍔 Menu</h2>
+    <div id="menu" class="menu-grid"></div>
+
+    <h2>🛒 Your Cart</h2>
+    <div class="cart-box">
+        <table id="cartTable">
+            <tr><th>Item</th><th>Qty</th><th>Price</th></tr>
+        </table>
+        <button onclick="placeOrder()">Place Order</button>
+        <div id="orderMessage"></div>
+    </div>
+
+    <h2>📊 Reports</h2>
+    <button onclick="showPendingOrders()">Pending Orders</button>
+    <button onclick="showPopularItems()">Popular Items</button>
+    <button onclick="showCustomerHistory()">Customer History</button>
+
+    <div id="reportArea" style="margin-top:20px;"></div>
+</div>
+
+
+<script>
+// ----------------------------------------------------
+// “DATABASE TABLES” SIMULATED
+// ----------------------------------------------------
+let Customers = [];
+let Menu_Items = [
+    { id:1, name:"Classic Burger", price:20, stock:10, img:"https://brookrest.com/wp-content/uploads/2020/05/AdobeStock_282247995-scaled.jpeg" },
+    { id:2, name:"Cheesy Garlic Pizza", price:35, stock:7, img:"https://violarecipes.com/wp-content/uploads/2025/07/cheesy_garlic_pizza_featured-1024x1024.jpg" },
+    { id:3, name:"Creamy Pasta", price:25, stock:8, img:"https://vikalinka.com/wp-content/uploads/2023/06/pasta-cream-sauce-8-Edit.jpg" },
+    { id:4, name:"Chicken Shawarma", price:15, stock:12, img:"https://bakingmischief.com/wp-content/uploads/2016/05/chicken-shawarma-with-yogurt-sauce-picture.jpg" },
+    { id:5, name:"Crispy Fries", price:10, stock:20, img:"https://blog.thermoworks.com/wp-content/uploads/2018/01/french_fry_atk_method-31-of-36.jpg" },
+    { id:6, name:"Fresh Juices", price:8, stock:25, img:"https://www.itl.cat/pngfile/big/159-1592544_fresh-juice-images-hd.jpg" },
+];
+let Orders = [];
+let Order_Details = [];
+
+let cart = [];
+
+// ----------------------------------------------------
+// LOAD MENU WITH IMAGES
+// ----------------------------------------------------
+function loadMenu() {
+    let m = document.getElementById("menu");
+    Menu_Items.forEach(item=>{
+        m.innerHTML += `
+        <div class="item-card">
+            <img src="${item.img}" class="food-img">
+            <h3>${item.name}</h3>
+            <p><b>Price:</b> ${item.price} SAR</p>
+            <p><b>Stock:</b> ${item.stock}</p>
+
+            <input type="number" id="qty${item.id}" value="1" min="1" max="${item.stock}"
+                style="width:60px; border-radius:8px; margin-top:5px;">
+
+            <button onclick="addToCart(${item.id})" style="margin-top:10px;">Add to Cart</button>
+        </div>`;
+    });
+}
+loadMenu();
+
+// ----------------------------------------------------
+// ADD CUSTOMER
+// ----------------------------------------------------
+function addCustomer() {
+    let name = document.getElementById("customerName").value;
+    if(name === "") { alert("Enter customer name"); return; }
+
+    Customers.push({
+        customer_id: Customers.length+1,
+        name: name
+    });
+
+    alert("Customer Added!");
+}
+
+// ----------------------------------------------------
+// STOCK CHECK
+// ----------------------------------------------------
+function checkStock(id, qty) {
+    let item = Menu_Items.find(x=>x.id===id);
+    return item.stock >= qty;
+}
+
+// ----------------------------------------------------
+// ADD TO CART
+// ----------------------------------------------------
+function addToCart(id) {
+    let qty = parseInt(document.getElementById("qty"+id).value);
+    let item = Menu_Items.find(x=>x.id===id);
+
+    if(!checkStock(id, qty)) {
+        alert("Not enough stock!");
+        return;
+    }
+
+    cart.push({
+        id: id,
+        name: item.name,
+        qty: qty,
+        price: item.price
+    });
+
+    updateCartTable();
+}
+
+// ----------------------------------------------------
+// UPDATE CART UI
+// ----------------------------------------------------
+function updateCartTable() {
+    let t = document.getElementById("cartTable");
+    t.innerHTML = `<tr><th>Item</th><th>Qty</th><th>Price</th></tr>`;
+
+    cart.forEach(c=>{
+        t.innerHTML += `
+            <tr>
+                <td>${c.name}</td>
+                <td>${c.qty}</td>
+                <td>${c.price * c.qty} SAR</td>
+            </tr>
+        `;
+    });
+}
+
+// ----------------------------------------------------
+// PLACE ORDER
+// ----------------------------------------------------
+function placeOrder() {
+    if(Customers.length === 0){
+        document.getElementById("orderMessage").innerHTML =
+        `<div class='error'>Add a customer first!</div>`;
+        return;
+    }
+    if(cart.length === 0){
+        document.getElementById("orderMessage").innerHTML =
+        `<div class='error'>Cart is empty!</div>`;
+        return;
+    }
+
+    let customer_id = Customers[Customers.length-1].customer_id;
+    let order_id = Orders.length+1;
+
+    Orders.push({
+        order_id,
+        customer_id,
+        date: new Date().toLocaleString(),
+        status: "Pending"
+    });
+
+    cart.forEach(c=>{
+        Order_Details.push({
+            detail_id: Order_Details.length+1,
+            order_id,
+            item_id: c.id,
+            qty: c.qty
+        });
+
+        // TRIGGER — REDUCE STOCK
+        let item = Menu_Items.find(x=>x.id===c.id);
+        item.stock -= c.qty;
+    });
+
+    cart = [];
+    updateCartTable();
+
+    document.getElementById("orderMessage").innerHTML =
+    `<div class='success'>Order placed successfully! Order ID: ${order_id}</div>`;
+}
+
+// ----------------------------------------------------
+// REPORTS
+// ----------------------------------------------------
+function showPendingOrders() {
+    let area = document.getElementById("reportArea");
+    area.innerHTML = "<h3>⏳ Pending Orders</h3>";
+
+    Orders.filter(o=>o.status==="Pending").forEach(o=>{
+        let c = Customers.find(x=>x.customer_id === o.customer_id);
+        area.innerHTML += `<p>Order #${o.order_id} - ${c.name} (${o.date})</p>`;
+    });
+}
+
+function showPopularItems() {
+    let area = document.getElementById("reportArea");
+    area.innerHTML = "<h3>🔥 Most Popular Items</h3>";
+
+    let count = {};
+    Order_Details.forEach(d=>{
+        if(!count[d.item_id]) count[d.item_id]=0;
+        count[d.item_id]+=d.qty;
+    });
+
+    Object.entries(count).sort((a,b)=>b[1]-a[1])
+    .forEach(([id,qty])=>{
+        let item = Menu_Items.find(x=>x.id==id);
+        area.innerHTML += `<p>${item.name}: ${qty} orders</p>`;
+    });
+}
+
+function showCustomerHistory() {
+    let area = document.getElementById("reportArea");
+    area.innerHTML = "<h3>📜 Customer Order History</h3>";
+
+    Customers.forEach(c=>{
+        area.innerHTML += `<h4>${c.name}</h4>`;
+        Orders.filter(o=>o.customer_id===c.customer_id)
+        .forEach(o=>{
+            area.innerHTML += `<p>Order #${o.order_id} (${o.date})</p>`;
+            Order_Details.filter(d=>d.order_id===o.order_id)
+            .forEach(d=>{
+                let item = Menu_Items.find(i=>i.id===d.item_id);
+                area.innerHTML += `<p style='margin-left:20px;'>${item.name} x ${d.qty}</p>`;
+            });
+        });
+    });
+}
+
+</script>
+
+</body>
+</html>
